@@ -1,6 +1,7 @@
 "use client";
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../providers/AuthProvider";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -9,21 +10,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const { login } = useAuth();
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(""); setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      if (!res.ok) throw new Error("Invalid credentials");
-      const data = await res.json();
-      localStorage.setItem("acorn_token", data.token);
-      localStorage.setItem("acorn_user", JSON.stringify({ username: data.username, role: data.role }));
-      document.cookie = `acorn_token=${data.token}; path=/`;
-      router.push("/dashboard");
+      await login(username, password);
     } catch {
       setError("Invalid username or password.");
     } finally {

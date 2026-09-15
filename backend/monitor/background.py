@@ -2,7 +2,11 @@
 Background Tasks — orchestrates all ACORN real-time processes.
 """
 import asyncio
+import os
+import json
 from datetime import datetime
+import firebase_admin
+from firebase_admin import credentials, db
 from backend.config import (
     NETWORK_TICK_INTERVAL_SECONDS,
     CASH_CHECK_INTERVAL_SECONDS,
@@ -11,9 +15,34 @@ from backend.config import (
     SEGMENTS,
 )
 
+def init_firebase():
+    if not firebase_admin._apps:
+        cred_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+        database_url = os.getenv("FIREBASE_DATABASE_URL")
+        if cred_json and database_url:
+            try:
+                cred_dict = json.loads(cred_json)
+                cred = credentials.Certificate(cred_dict)
+                firebase_admin.initialize_app(cred, {
+                    'databaseURL': database_url
+                })
+                print("[Firebase] Initialized successfully.")
+            except Exception as e:
+                print(f"[Firebase] Error initializing: {e}")
+        else:
+            print("[Firebase] Skipping: FIREBASE_SERVICE_ACCOUNT or FIREBASE_DATABASE_URL not found.")
+
+def push_to_firebase(message: dict):
+    if not firebase_admin._apps:
+        return
+    try:
+        ref = db.reference('acorn/network_state')
+        ref.set(message)
+    except Exception as e:
+        print(f"[Firebase] Error pushing to RTDB: {e}")
 
 async def network_tick_loop():
-    """Every 2s: update network state, compute CRATE scores, broadcast via WS."""
+    """Every 2s: update network state, compute CRATE scores, broadcast to Firebase."""
     from backend.erp.service import get_current_context
     from backend.network.state import update_state
     from backend.crate.scorer import compute_cnhs, compute_campus_cnhs
@@ -95,13 +124,16 @@ async def network_tick_loop():
                 "alerts": alerts,
             }
 
+            # Optional backward compatibility with WebSockets if still configured
             await manager.broadcast(message)
+
+            # Push to Firebase Realtime Database
+            push_to_firebase(message)
 
         except Exception as e:
             print(f"[ACORN Tick Error] {e}")
 
         await asyncio.sleep(NETWORK_TICK_INTERVAL_SECONDS)
-
 
 def _build_alerts(segment_scores: list[dict], erp_context) -> list[dict]:
     alerts = []
@@ -124,7 +156,6 @@ def _build_alerts(segment_scores: list[dict], erp_context) -> list[dict]:
             })
     return alerts
 
-
 def _classify_campus(cnhs: float) -> str:
     if cnhs >= 75:
         return "healthy"
@@ -134,7 +165,7 @@ def _classify_campus(cnhs: float) -> str:
         return "critical"
     return "down"
 
-
 async def start_background_tasks():
+    init_firebase()
     asyncio.create_task(network_tick_loop())
     print("[ACORN] Background tasks started.")

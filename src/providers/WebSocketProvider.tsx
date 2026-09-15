@@ -1,5 +1,7 @@
 "use client";
-import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { ref, onValue } from "firebase/database";
+import { database } from "../lib/firebase";
 
 export type WSStatus = "connecting" | "connected" | "reconnecting" | "disconnected";
 
@@ -48,59 +50,37 @@ interface WSCtx {
 
 const WSContext = createContext<WSCtx>({ status: "connecting", data: null, lastUpdate: null });
 
-const WS_URL = typeof window !== "undefined"
-  ? (process.env.NEXT_PUBLIC_WS_URL || (window.location.hostname === "localhost" ? "ws://localhost:8000/ws/monitor" : `wss://${window.location.host}/ws/monitor`))
-  : "ws://localhost:8000/ws/monitor";
-
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<WSStatus>("connecting");
   const [data, setData] = useState<ACORNUpdate | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const retryCount = useRef(0);
-
-  const connect = useCallback(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const ws = new WebSocket(WS_URL);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        setStatus("connected");
-        retryCount.current = 0;
-      };
-
-      ws.onmessage = (e) => {
-        try {
-          const parsed: ACORNUpdate = JSON.parse(e.data);
-          setData(parsed);
-          setLastUpdate(new Date());
-        } catch { /* ignore parse errors */ }
-      };
-
-      ws.onclose = () => {
-        setStatus("reconnecting");
-        const delay = Math.min(1000 * 2 ** retryCount.current, 15000);
-        retryCount.current += 1;
-        reconnectRef.current = setTimeout(connect, delay);
-      };
-
-      ws.onerror = () => {
-        ws.close();
-      };
-    } catch {
-      setStatus("disconnected");
-    }
-  }, []);
 
   useEffect(() => {
-    connect();
+    // Listen to Firebase connection state
+    const connectedRef = ref(database, ".info/connected");
+    const unsubConnected = onValue(connectedRef, (snap) => {
+      if (snap.val() === true) {
+        setStatus("connected");
+      } else {
+        setStatus("connecting");
+      }
+    });
+
+    // Listen to the ACORN network state
+    const stateRef = ref(database, "acorn/network_state");
+    const unsubState = onValue(stateRef, (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        setData(val);
+        setLastUpdate(new Date());
+      }
+    });
+
     return () => {
-      wsRef.current?.close();
-      if (reconnectRef.current) clearTimeout(reconnectRef.current);
+      unsubConnected();
+      unsubState();
     };
-  }, [connect]);
+  }, []);
 
   return (
     <WSContext.Provider value={{ status, data, lastUpdate }}>

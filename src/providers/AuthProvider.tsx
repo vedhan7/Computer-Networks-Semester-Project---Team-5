@@ -1,5 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth } from "../lib/firebase";
 
 interface User { username: string; role: string; }
 interface AuthCtx {
@@ -16,31 +18,41 @@ const AuthContext = createContext<AuthCtx>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>({ username: "admin", role: "admin" });
-  const [token, setToken] = useState<string | null>("demo-token");
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Auth bypassed for demo
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const idToken = await firebaseUser.getIdToken();
+        setToken(idToken);
+        setUser({ username: firebaseUser.email || "admin", role: "admin" });
+        // Set cookie so Next.js proxy middleware knows we are logged in
+        document.cookie = `acorn_token=${idToken}; path=/; max-age=86400`;
+      } else {
+        setToken(null);
+        setUser(null);
+        document.cookie = "acorn_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
-    setToken("demo-token");
-    setUser({ username, role: "admin" });
+    await signInWithEmailAndPassword(auth, username, password);
     window.location.href = "/dashboard";
   }, []);
 
-  const logout = useCallback(() => {
-    setToken(null); setUser(null);
-    localStorage.removeItem("acorn_token");
-    localStorage.removeItem("acorn_user");
-    document.cookie = "acorn_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  const logout = useCallback(async () => {
+    await signOut(auth);
     window.location.href = "/login";
   }, []);
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, loading }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
