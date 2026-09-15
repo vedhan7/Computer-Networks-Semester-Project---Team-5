@@ -16,33 +16,18 @@ const AuthContext = createContext<AuthCtx>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>({ username: "admin", role: "admin" });
+  const [token, setToken] = useState<string | null>("demo-token");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const t = localStorage.getItem("acorn_token");
-    const u = localStorage.getItem("acorn_user");
-    if (t && u) {
-      setToken(t);
-      setUser(JSON.parse(u));
-    }
-    setLoading(false);
+    // Auth bypassed for demo
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
-    const res = await fetch("http://localhost:8000/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    if (!res.ok) throw new Error("Invalid credentials");
-    const data = await res.json();
-    setToken(data.token);
-    setUser({ username: data.username, role: data.role });
-    localStorage.setItem("acorn_token", data.token);
-    localStorage.setItem("acorn_user", JSON.stringify({ username: data.username, role: data.role }));
-    document.cookie = `acorn_token=${data.token}; path=/`;
+    setToken("demo-token");
+    setUser({ username, role: "admin" });
+    window.location.href = "/dashboard";
   }, []);
 
   const logout = useCallback(() => {
@@ -65,7 +50,8 @@ export const useAuth = () => useContext(AuthContext);
 export function useApiClient() {
   const { token } = useAuth();
   return useCallback(async (path: string, options?: RequestInit) => {
-    const res = await fetch(`http://localhost:8000${path}`, {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const res = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",

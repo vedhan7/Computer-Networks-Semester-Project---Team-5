@@ -48,7 +48,9 @@ interface WSCtx {
 
 const WSContext = createContext<WSCtx>({ status: "connecting", data: null, lastUpdate: null });
 
-const WS_URL = "ws://localhost:8000/ws/monitor";
+const WS_URL = typeof window !== "undefined"
+  ? (process.env.NEXT_PUBLIC_WS_URL || (window.location.hostname === "localhost" ? "ws://localhost:8000/ws/monitor" : `wss://${window.location.host}/ws/monitor`))
+  : "ws://localhost:8000/ws/monitor";
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<WSStatus>("connecting");
