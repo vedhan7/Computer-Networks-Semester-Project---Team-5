@@ -3,10 +3,14 @@
 import { motion } from "framer-motion";
 import { useSDNStore } from "@/store/useSDNStore";
 import { Users } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function JaccardVisualizer() {
   const { jaccardScore } = useSDNStore();
   const isAuthorized = jaccardScore >= 0.60;
+  
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Generate mock nodes
   const nodes = Array.from({ length: 12 }).map((_, i) => i);
@@ -48,7 +52,7 @@ export default function JaccardVisualizer() {
         </div>
 
         {/* Animated Nodes */}
-        {nodes.map((node) => (
+        {mounted && nodes.map((node) => (
           <motion.div
             key={node}
             initial={false}
