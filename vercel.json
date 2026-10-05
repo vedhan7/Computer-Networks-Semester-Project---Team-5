@@ -4,6 +4,10 @@
     {
       "src": "dist/app.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
     }
   ],
   "routes": [
@@ -14,6 +18,10 @@
     {
       "src": "/health",
       "dest": "dist/app.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/$1"
     }
   ],
   "env": {
