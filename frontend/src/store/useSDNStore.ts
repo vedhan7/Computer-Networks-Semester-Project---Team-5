@@ -25,16 +25,19 @@ interface TIPSJob {
 }
 
 interface SDNState {
+  activeTab: string;
   cnhsScore: number;
   threatLogs: ThreatLog[];
   jaccardScore: number;
   bandwidthCapacity: number;
   allocations: ClassAllocation[];
   tipsJobs: TIPSJob[];
+  setActiveTab: (tab: string) => void;
   setCnhsScore: (score: number) => void;
 }
 
 export const useSDNStore = create<SDNState>((set) => ({
+  activeTab: 'dashboard',
   cnhsScore: 73.5, // Initial CNHS score < 80 for critical demo
   threatLogs: [
     { id: '1', u_obs: 45, u_pred: 100, deviation: 55, w_ac: 3, cnhs: 73.5, timestamp: '14:02:45' },
@@ -53,5 +56,6 @@ export const useSDNStore = create<SDNState>((set) => ({
     { id: 'job-3', classId: 'PHY301', state: 'ACTIVE', time: '0m' },
     { id: 'job-4', classId: 'ENG102', state: 'EXPIRED', time: '+120m' },
   ],
+  setActiveTab: (tab) => set({ activeTab: tab }),
   setCnhsScore: (score) => set({ cnhsScore: score }),
 }));
