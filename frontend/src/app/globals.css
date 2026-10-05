@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+@theme {
+  --color-obsidian: #09090B;
+  --color-surface: #18181B;
+  --color-surface-border: #27272A;
+  --color-quantum-teal: #2DD4BF;
+  --color-kinetic-purple: #A78BFA;
+  --color-anomaly-warning: #FBBF24;
+  --color-anomaly-critical: #F43F5E;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-obsidian);
+  color: #ededed;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
