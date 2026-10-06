@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import { ClassEvent, generateTimetable } from '../lib/engine/timetable';
+import { APCR_CONFIG } from '../lib/engine/config';
 import { SimulatedClock } from '../lib/engine/clock';
 import { setSeed, getSeed } from '../lib/engine/prng';
 import { TipsJob, initializeTipsPipeline, evaluateTipsPipeline } from '../lib/engine/tips';
 import { NetworkTopologyState, initializeTopology } from '../lib/engine/topology';
+import { CnhsCalculation, calculateCNHS } from '../lib/engine/cnhs';
 
 interface EngineState {
   // Config
@@ -22,6 +24,9 @@ interface EngineState {
 
   // Topology
   topology: NetworkTopologyState;
+  
+  // CNHS
+  cnhsHistory: CnhsCalculation[];
   
   // Actions
   initialize: (seed?: number) => void;
@@ -47,6 +52,7 @@ export const useEngineStore = create<EngineState>((set, get) => ({
   events: [],
   tipsJobs: [],
   topology: { nodes: [], links: [] },
+  cnhsHistory: [],
 
   initialize: (seed = 123456789) => {
     setSeed(seed);
@@ -86,11 +92,32 @@ export const useEngineStore = create<EngineState>((set, get) => ({
   },
 
   tick: () => {
-    const { clock, tipsJobs } = get();
+    const { clock, tipsJobs, topology, cnhsHistory } = get();
     if (clock.isRunning()) {
       const newTime = clock.tick();
       const updatedTips = evaluateTipsPipeline(tipsJobs, newTime);
-      set({ currentTime: newTime, tipsJobs: updatedTips });
+      
+      // Calculate CNHS for active rooms
+      const activeJobs = updatedTips.filter(j => j.currentState === 'ACTIVE');
+      const newCnhs: CnhsCalculation[] = [];
+      
+      for (const job of activeJobs) {
+        // Find corresponding link load in topology
+        const link = topology.links.find(l => l.target === job.room);
+        const actualLoad = link ? link.currentLoadMbps : 0;
+        
+        // Find W_ac
+        const eventTypeKey = job.eventType as keyof typeof APCR_CONFIG;
+        const w_ac = APCR_CONFIG[eventTypeKey] ? APCR_CONFIG[eventTypeKey].w_ac : 2; // simplified fallback
+        
+        newCnhs.push(calculateCNHS(job.expectedBandwidth, actualLoad, w_ac, newTime, job.room));
+      }
+
+      set({ 
+        currentTime: newTime, 
+        tipsJobs: updatedTips,
+        cnhsHistory: [...cnhsHistory, ...newCnhs]
+      });
     }
   },
 

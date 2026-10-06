@@ -9,6 +9,7 @@ export interface TipsJob {
   startTime: number;
   durationMinutes: number;
   expectedBandwidth: number;
+  eventType: string;
   
   currentState: TipsState;
   stateHistory: { state: TipsState; timestamp: number }[];
@@ -31,6 +32,7 @@ export function initializeTipsPipeline(events: ClassEvent[]): TipsJob[] {
       eventId: e.id,
       room: e.room,
       course: e.course,
+      eventType: e.eventType,
       startTime: e.startTime,
       durationMinutes: e.durationMinutes,
       expectedBandwidth: e.expectedBandwidth,
