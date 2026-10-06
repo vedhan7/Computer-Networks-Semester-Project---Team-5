@@ -29,6 +29,7 @@ interface EngineState {
   setSpeed: (speed: number) => void;
   jumpToNextEvent: () => void;
   tick: () => void;
+  injectScenario: (type: 'DDOS' | 'EXAM_SURGE' | 'ROOM_MOVE' | 'LINK_FAILURE' | 'ROGUE_MAC') => void;
 }
 
 const baseTime = new Date().setHours(0, 0, 0, 0); // Midnight today
@@ -91,5 +92,50 @@ export const useEngineStore = create<EngineState>((set, get) => ({
       const updatedTips = evaluateTipsPipeline(tipsJobs, newTime);
       set({ currentTime: newTime, tipsJobs: updatedTips });
     }
+  },
+
+  injectScenario: (type) => {
+    const { topology, tipsJobs } = get();
+    const newTopology = { ...topology, links: [...topology.links], nodes: [...topology.nodes] };
+    
+    switch(type) {
+      case 'DDOS':
+        // Find highest priority active event and target its room
+        const activeEvents = tipsJobs.filter(j => j.currentState === 'ACTIVE');
+        if (activeEvents.length > 0) {
+          const target = activeEvents.reduce((prev, curr) => (curr.expectedBandwidth > prev.expectedBandwidth) ? curr : prev);
+          const linkIndex = newTopology.links.findIndex(l => l.target === target.room);
+          if (linkIndex !== -1) {
+             newTopology.links[linkIndex] = { ...newTopology.links[linkIndex], currentLoadMbps: 850 };
+          }
+        }
+        break;
+      case 'LINK_FAILURE':
+        // Break L-CORE-ALPHA
+        const coreLinkIdx = newTopology.links.findIndex(l => l.id === 'L-CORE-ALPHA');
+        if (coreLinkIdx !== -1) {
+          newTopology.links[coreLinkIdx] = { ...newTopology.links[coreLinkIdx], isFailed: true, currentLoadMbps: 0 };
+        }
+        break;
+      case 'ROGUE_MAC':
+        // Quarantine a random active AP
+        const aps = newTopology.nodes.filter(n => n.type === 'ROOM_AP');
+        if (aps.length > 0) {
+          const idx = Math.floor(Math.random() * aps.length); // Use JS random for user-triggered unpredictable ad-hoc event
+          newTopology.nodes[idx] = { ...newTopology.nodes[idx], isQuarantined: true };
+        }
+        break;
+      case 'EXAM_SURGE':
+        // Max out all building links
+        newTopology.links = newTopology.links.map(l => 
+          l.source === 'CORE' ? { ...l, currentLoadMbps: l.capacityMbps * 0.95 } : l
+        );
+        break;
+      case 'ROOM_MOVE':
+        // Just an alert for now, will implement Triangulation later
+        break;
+    }
+    
+    set({ topology: newTopology });
   }
 }));

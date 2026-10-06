@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Settings2, Play, Hash, Zap, RefreshCw, AlertTriangle, ArrowRightLeft, Unplug, ShieldAlert } from "lucide-react";
 
 export default function PresenterControls() {
-  const { seed, initialize } = useEngineStore();
+  const { seed, initialize, injectScenario } = useEngineStore();
   const [isOpen, setIsOpen] = useState(false);
   const [inputSeed, setInputSeed] = useState(seed.toString());
 
@@ -76,7 +76,10 @@ export default function PresenterControls() {
           <div className="space-y-2">
             <span className="text-2xs font-semibold text-text-faint uppercase tracking-wider block mb-3">Scenario Injections</span>
             
-            <button className="w-full flex items-center gap-3 p-2.5 rounded-md border border-danger/20 bg-danger/5 hover:bg-danger/10 transition-colors text-left group">
+            <button 
+              onClick={() => injectScenario('DDOS')}
+              className="w-full flex items-center gap-3 p-2.5 rounded-md border border-danger/20 bg-danger/5 hover:bg-danger/10 transition-colors text-left group"
+            >
               <AlertTriangle className="w-4 h-4 text-danger group-hover:scale-110 transition-transform" />
               <div>
                 <div className="text-xs font-medium text-danger">Inject DDoS Spike</div>
@@ -84,7 +87,10 @@ export default function PresenterControls() {
               </div>
             </button>
 
-            <button className="w-full flex items-center gap-3 p-2.5 rounded-md border border-warning/20 bg-warning/5 hover:bg-warning/10 transition-colors text-left group">
+            <button 
+              onClick={() => injectScenario('EXAM_SURGE')}
+              className="w-full flex items-center gap-3 p-2.5 rounded-md border border-warning/20 bg-warning/5 hover:bg-warning/10 transition-colors text-left group"
+            >
               <Zap className="w-4 h-4 text-warning group-hover:scale-110 transition-transform" />
               <div>
                 <div className="text-xs font-medium text-warning">Exam Surge</div>
@@ -92,7 +98,10 @@ export default function PresenterControls() {
               </div>
             </button>
 
-            <button className="w-full flex items-center gap-3 p-2.5 rounded-md border border-accent/20 bg-accent/5 hover:bg-accent/10 transition-colors text-left group">
+            <button 
+              onClick={() => injectScenario('ROOM_MOVE')}
+              className="w-full flex items-center gap-3 p-2.5 rounded-md border border-accent/20 bg-accent/5 hover:bg-accent/10 transition-colors text-left group"
+            >
               <ArrowRightLeft className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
               <div>
                 <div className="text-xs font-medium text-accent">Ad-hoc Room Move</div>
@@ -100,7 +109,10 @@ export default function PresenterControls() {
               </div>
             </button>
 
-            <button className="w-full flex items-center gap-3 p-2.5 rounded-md border border-danger/20 bg-danger/5 hover:bg-danger/10 transition-colors text-left group">
+            <button 
+              onClick={() => injectScenario('LINK_FAILURE')}
+              className="w-full flex items-center gap-3 p-2.5 rounded-md border border-danger/20 bg-danger/5 hover:bg-danger/10 transition-colors text-left group"
+            >
               <Unplug className="w-4 h-4 text-danger group-hover:scale-110 transition-transform" />
               <div>
                 <div className="text-xs font-medium text-danger">Link Failure</div>
@@ -108,7 +120,10 @@ export default function PresenterControls() {
               </div>
             </button>
 
-            <button className="w-full flex items-center gap-3 p-2.5 rounded-md border border-danger/20 bg-danger/5 hover:bg-danger/10 transition-colors text-left group">
+            <button 
+              onClick={() => injectScenario('ROGUE_MAC')}
+              className="w-full flex items-center gap-3 p-2.5 rounded-md border border-danger/20 bg-danger/5 hover:bg-danger/10 transition-colors text-left group"
+            >
               <ShieldAlert className="w-4 h-4 text-danger group-hover:scale-110 transition-transform" />
               <div>
                 <div className="text-xs font-medium text-danger">Rogue MAC Flood</div>
