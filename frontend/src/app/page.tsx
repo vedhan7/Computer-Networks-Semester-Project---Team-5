@@ -12,6 +12,7 @@ import NetworkTopology from "@/components/NetworkTopology";
 import TIPSPipeline from "@/components/TIPSPipeline";
 import TimetableGantt from "@/components/TimetableGantt";
 import TriangulationRadar from "@/components/TriangulationRadar";
+import CashDecisions from "@/components/CashDecisions";
 
 export default function Dashboard() {
   const { cnhsHistory, topology, activeTriangulation } = useEngineStore();
@@ -86,13 +87,17 @@ export default function Dashboard() {
             </div>
           </div>
           
+          <div className="grid grid-cols-1 gap-6">
+            <TimetableGantt />
+          </div>
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="h-[500px]">
+            <div className="flex flex-col gap-6 h-[500px]">
               <NetworkTopology />
             </div>
             <div className="flex flex-col gap-6">
               <TriangulationRadar result={activeTriangulation} />
-              <TimetableGantt />
+              <CashDecisions />
               <TIPSPipeline />
             </div>
           </div>
