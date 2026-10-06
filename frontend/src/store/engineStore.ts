@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { ClassEvent, generateTimetable } from '../lib/engine/timetable';
 import { SimulatedClock } from '../lib/engine/clock';
 import { setSeed, getSeed } from '../lib/engine/prng';
+import { TipsJob, initializeTipsPipeline, evaluateTipsPipeline } from '../lib/engine/tips';
 
 interface EngineState {
   // Config
@@ -14,8 +15,9 @@ interface EngineState {
   timeSpeed: number;
   isPlaying: boolean;
 
-  // Timetable
+  // Timetable & TIPS
   events: ClassEvent[];
+  tipsJobs: TipsJob[];
   
   // Actions
   initialize: (seed?: number) => void;
@@ -38,12 +40,14 @@ export const useEngineStore = create<EngineState>((set, get) => ({
   isPlaying: false,
 
   events: [],
+  tipsJobs: [],
 
   initialize: (seed = 123456789) => {
     setSeed(seed);
     const events = generateTimetable(baseTime);
+    const tipsJobs = initializeTipsPipeline(events);
     get().clock.reset();
-    set({ seed, events, currentTime: get().clock.getTime(), isPlaying: false, timeSpeed: 1 });
+    set({ seed, events, tipsJobs, currentTime: get().clock.getTime(), isPlaying: false, timeSpeed: 1 });
   },
 
   togglePlay: () => {
@@ -75,9 +79,11 @@ export const useEngineStore = create<EngineState>((set, get) => ({
   },
 
   tick: () => {
-    const { clock } = get();
+    const { clock, tipsJobs } = get();
     if (clock.isRunning()) {
-      set({ currentTime: clock.tick() });
+      const newTime = clock.tick();
+      const updatedTips = evaluateTipsPipeline(tipsJobs, newTime);
+      set({ currentTime: newTime, tipsJobs: updatedTips });
     }
   }
 }));
