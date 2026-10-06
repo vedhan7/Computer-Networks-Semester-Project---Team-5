@@ -3,6 +3,7 @@ import { ClassEvent, generateTimetable } from '../lib/engine/timetable';
 import { SimulatedClock } from '../lib/engine/clock';
 import { setSeed, getSeed } from '../lib/engine/prng';
 import { TipsJob, initializeTipsPipeline, evaluateTipsPipeline } from '../lib/engine/tips';
+import { NetworkTopologyState, initializeTopology } from '../lib/engine/topology';
 
 interface EngineState {
   // Config
@@ -18,6 +19,9 @@ interface EngineState {
   // Timetable & TIPS
   events: ClassEvent[];
   tipsJobs: TipsJob[];
+
+  // Topology
+  topology: NetworkTopologyState;
   
   // Actions
   initialize: (seed?: number) => void;
@@ -41,13 +45,15 @@ export const useEngineStore = create<EngineState>((set, get) => ({
 
   events: [],
   tipsJobs: [],
+  topology: { nodes: [], links: [] },
 
   initialize: (seed = 123456789) => {
     setSeed(seed);
     const events = generateTimetable(baseTime);
     const tipsJobs = initializeTipsPipeline(events);
+    const topology = initializeTopology();
     get().clock.reset();
-    set({ seed, events, tipsJobs, currentTime: get().clock.getTime(), isPlaying: false, timeSpeed: 1 });
+    set({ seed, events, tipsJobs, topology, currentTime: get().clock.getTime(), isPlaying: false, timeSpeed: 1 });
   },
 
   togglePlay: () => {
