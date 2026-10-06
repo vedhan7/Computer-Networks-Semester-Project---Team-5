@@ -13,6 +13,7 @@ import TIPSPipeline from "@/components/TIPSPipeline";
 import TimetableGantt from "@/components/TimetableGantt";
 import TriangulationRadar from "@/components/TriangulationRadar";
 import CashDecisions from "@/components/CashDecisions";
+import BenchmarkOverlay from "@/components/BenchmarkOverlay";
 
 export default function Dashboard() {
   const { cnhsHistory, topology, activeTriangulation } = useEngineStore();
@@ -78,12 +79,15 @@ export default function Dashboard() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-2">
               <CnhsChart />
             </div>
             <div className="lg:col-span-1 h-[400px]">
               <SecurityLog />
+            </div>
+            <div className="lg:col-span-1 h-[400px]">
+              <BenchmarkOverlay />
             </div>
           </div>
           
