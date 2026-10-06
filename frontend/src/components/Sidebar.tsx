@@ -2,48 +2,52 @@
 
 import {
   LayoutDashboard,
+  Calendar,
+  Network,
   ShieldAlert,
-  Activity,
-  Radio,
-  Gauge,
+  MapPin,
+  GitMerge,
+  BarChart,
   Settings,
   ChevronLeft,
-  Network,
 } from "lucide-react";
-import { useSDNStore } from "@/store/useSDNStore";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const NAV_GROUPS = [
   {
     label: "Overview",
     items: [
-      { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { id: "activity", label: "Traffic", icon: Activity },
+      { path: "/", label: "Overview", icon: LayoutDashboard },
+      { path: "/timetable", label: "ERP Timetable", icon: Calendar },
     ],
   },
   {
-    label: "Monitoring",
+    label: "Digital Twin",
     items: [
-      { id: "threats", label: "Threat Events", icon: ShieldAlert },
-      { id: "timeline", label: "TIPS Pipeline", icon: Radio },
+      { path: "/topology", label: "Live Topology", icon: Network },
+      { path: "/security", label: "Security (CNHS)", icon: ShieldAlert },
     ],
   },
   {
-    label: "Control",
+    label: "ACORN Engine",
     items: [
-      { id: "bandwidth", label: "Bandwidth", icon: Gauge },
+      { path: "/triangulation", label: "Triangulation", icon: MapPin },
+      { path: "/conflicts", label: "APCR & CASH", icon: GitMerge },
     ],
   },
   {
     label: "System",
     items: [
-      { id: "settings", label: "Settings", icon: Settings },
+      { path: "/benchmark", label: "Benchmark", icon: BarChart },
+      { path: "/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
 
 export default function Sidebar() {
-  const { activeTab, setActiveTab } = useSDNStore();
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -59,7 +63,7 @@ export default function Sidebar() {
         </div>
         {!collapsed && (
           <span className="text-sm font-semibold text-text-primary truncate">
-            SDN Command
+            ACORN Twin
           </span>
         )}
       </div>
@@ -76,14 +80,17 @@ export default function Sidebar() {
             <div className="space-y-0.5">
               {group.items.map((item) => {
                 const Icon = item.icon;
-                const isActive = activeTab === item.id;
+                const isActive = pathname === item.path || pathname?.startsWith(item.path + '/');
+                // Exact match for home, startsWith for others
+                const isCurrent = item.path === '/' ? pathname === '/' : isActive;
+                
                 return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
+                  <Link
+                    key={item.path}
+                    href={item.path}
                     title={collapsed ? item.label : undefined}
                     className={`w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-md text-sm transition-colors duration-150 ${
-                      isActive
+                      isCurrent
                         ? "bg-accent/10 text-accent"
                         : "text-text-muted hover:text-text-secondary hover:bg-surface-secondary"
                     }`}
@@ -92,10 +99,10 @@ export default function Sidebar() {
                     {!collapsed && (
                       <span className="truncate font-medium">{item.label}</span>
                     )}
-                    {isActive && !collapsed && (
+                    {isCurrent && !collapsed && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />
                     )}
-                  </button>
+                  </Link>
                 );
               })}
             </div>
