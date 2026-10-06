@@ -1,23 +1,74 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
-  --color-obsidian: #09090B;
-  --color-surface: #18181B;
-  --color-surface-border: #27272A;
-  --color-quantum-teal: #2DD4BF;
-  --color-kinetic-purple: #A78BFA;
-  --color-anomaly-warning: #FBBF24;
-  --color-anomaly-critical: #F43F5E;
+  /* Foundation surfaces */
+  --color-bg: #0B0F14;
+  --color-surface: #111720;
+  --color-surface-secondary: #161D26;
+  --color-surface-elevated: #1B2430;
+  --color-border: #26313D;
+  --color-border-subtle: #1E2733;
+
+  /* Text hierarchy */
+  --color-text-primary: #F3F5F7;
+  --color-text-secondary: #9AA6B2;
+  --color-text-muted: #687583;
+  --color-text-faint: #4A5565;
+
+  /* Brand accent — restrained teal */
+  --color-accent: #19C3A3;
+  --color-accent-dim: rgba(25, 195, 163, 0.12);
+  --color-accent-border: rgba(25, 195, 163, 0.25);
+
+  /* Semantic status */
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
 }
 
 :root {
   color-scheme: dark;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
-  background-color: var(--color-obsidian);
-  color: #ededed;
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Tabular numerals for metric values */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mono utility */
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
 }
