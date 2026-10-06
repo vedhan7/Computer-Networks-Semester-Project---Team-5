@@ -6,6 +6,7 @@ import { setSeed, getSeed } from '../lib/engine/prng';
 import { TipsJob, initializeTipsPipeline, evaluateTipsPipeline } from '../lib/engine/tips';
 import { NetworkTopologyState, initializeTopology } from '../lib/engine/topology';
 import { CnhsCalculation, calculateCNHS } from '../lib/engine/cnhs';
+import { TriangulationResult, triangulateClient } from '../lib/engine/triangulation';
 
 interface EngineState {
   // Config
@@ -22,8 +23,9 @@ interface EngineState {
   events: ClassEvent[];
   tipsJobs: TipsJob[];
 
-  // Topology
+  // Topology & Spatial
   topology: NetworkTopologyState;
+  activeTriangulation: TriangulationResult | null;
   
   // CNHS
   cnhsHistory: CnhsCalculation[];
@@ -52,6 +54,7 @@ export const useEngineStore = create<EngineState>((set, get) => ({
   events: [],
   tipsJobs: [],
   topology: { nodes: [], links: [] },
+  activeTriangulation: null,
   cnhsHistory: [],
 
   initialize: (seed = 123456789) => {
@@ -60,7 +63,7 @@ export const useEngineStore = create<EngineState>((set, get) => ({
     const tipsJobs = initializeTipsPipeline(events);
     const topology = initializeTopology();
     get().clock.reset();
-    set({ seed, events, tipsJobs, topology, currentTime: get().clock.getTime(), isPlaying: false, timeSpeed: 1 });
+    set({ seed, events, tipsJobs, topology, activeTriangulation: null, currentTime: get().clock.getTime(), isPlaying: false, timeSpeed: 1 });
   },
 
   togglePlay: () => {
@@ -159,7 +162,12 @@ export const useEngineStore = create<EngineState>((set, get) => ({
         );
         break;
       case 'ROOM_MOVE':
-        // Just an alert for now, will implement Triangulation later
+        // Trigger spatial triangulation for a roaming MAC
+        const ap1 = { id: 'Alpha-101', rssi: -45, x: 150, y: 150 };
+        const ap2 = { id: 'Alpha-201', rssi: -65, x: 200, y: 100 };
+        const ap3 = { id: 'Alpha-301', rssi: -85, x: 100, y: 100 };
+        const result = triangulateClient('AA:BB:CC:DD:EE:FF', ap1, ap2, ap3);
+        set({ activeTriangulation: result });
         break;
     }
     

@@ -11,9 +11,10 @@ import SecurityLog from "@/components/SecurityLog";
 import NetworkTopology from "@/components/NetworkTopology";
 import TIPSPipeline from "@/components/TIPSPipeline";
 import TimetableGantt from "@/components/TimetableGantt";
+import TriangulationRadar from "@/components/TriangulationRadar";
 
 export default function Dashboard() {
-  const { cnhsHistory, topology } = useEngineStore();
+  const { cnhsHistory, topology, activeTriangulation } = useEngineStore();
 
   // Aggregate metrics for KPI cards
   const kpiData = useMemo(() => {
@@ -90,6 +91,7 @@ export default function Dashboard() {
               <NetworkTopology />
             </div>
             <div className="flex flex-col gap-6">
+              <TriangulationRadar result={activeTriangulation} />
               <TimetableGantt />
               <TIPSPipeline />
             </div>
