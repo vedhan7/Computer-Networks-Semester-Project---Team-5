@@ -20,6 +20,7 @@ export default function RootLayout({
           <Sidebar />
           {/* Main content wrapper with dynamic left margin for sidebar */}
           <main className="flex-1 flex flex-col h-screen overflow-hidden ml-[56px] lg:ml-[220px] transition-all duration-200">
+            <EngineInitializer />
             {children}
             <PresenterControls />
           </main>
