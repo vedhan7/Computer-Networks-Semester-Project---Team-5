@@ -99,14 +99,35 @@ export const useEngineStore = create<EngineState>((set, get) => ({
     if (clock.isRunning()) {
       const newTime = clock.tick();
       const updatedTips = evaluateTipsPipeline(tipsJobs, newTime);
-      
-      // Calculate CNHS for active rooms
+      // Update baseline traffic for all links based on active jobs
+      const newTopology = { ...topology, links: [...topology.links] };
+
+      // Reset all non-failed links to 0 first (base load)
+      newTopology.links.forEach((l, i) => {
+        if (!l.isFailed && l.source !== 'CORE') { // Skip core links for now, handle room links
+          newTopology.links[i].currentLoadMbps = 5; // Idle chatter 5Mbps
+        }
+      });
+
       const activeJobs = updatedTips.filter(j => j.currentState === 'ACTIVE');
+      
+      // Inject deterministic baseline traffic for active jobs
+      for (const job of activeJobs) {
+        const linkIndex = newTopology.links.findIndex(l => l.target === job.room);
+        if (linkIndex !== -1 && !newTopology.links[linkIndex].isFailed) {
+          // Add random jitter +/- 10%
+          const jitter = (getSeed() % 20 - 10) / 100;
+          const simulatedLoad = job.expectedBandwidth * (1 + jitter);
+          newTopology.links[linkIndex].currentLoadMbps = simulatedLoad;
+        }
+      }
+
+      // Calculate CNHS for active rooms
       const newCnhs: CnhsCalculation[] = [];
       
       for (const job of activeJobs) {
-        // Find corresponding link load in topology
-        const link = topology.links.find(l => l.target === job.room);
+        // Find corresponding link load in the updated topology
+        const link = newTopology.links.find(l => l.target === job.room);
         const actualLoad = link ? link.currentLoadMbps : 0;
         
         // Find W_ac
@@ -119,6 +140,7 @@ export const useEngineStore = create<EngineState>((set, get) => ({
       set({ 
         currentTime: newTime, 
         tipsJobs: updatedTips,
+        topology: newTopology,
         cnhsHistory: [...cnhsHistory, ...newCnhs]
       });
     }
